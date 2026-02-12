@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetLine Crew Pairing System - Lufthansa Systems</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Icon Components (simplified SVG icons)
+        const Icons = {
+            Users: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            ),
+            Calendar: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            ),
+            TrendingDown: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                </svg>
+            ),
+            CheckCircle: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            AlertTriangle: () => (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+            ),
+            Play: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            Upload: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+            ),
+            Download: () => (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+            ),
+            Clock: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            ),
+            Plane: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+            ),
+            Settings: () => (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            )
+        };
+
+        // Main Application Component
+        function CrewPairingApp() {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [flights, setFlights] = useState([]);
+            const [pairings, setPairings] = useState([]);
+            const [optimizationStatus, setOptimizationStatus] = useState('idle');
+            const [fatigueData, setFatigueData] = useState([]);
+            const [reliabilityScores, setReliabilityScores] = useState([]);
+            const [progress, setProgress] = useState(0);
+
+            useEffect(() => {
+                const sampleFlights = generateSampleFlights();
+                setFlights(sampleFlights);
+            }, []);
+
+            const generateSampleFlights = () => {
+                const bases = ['JFK', 'LAX', 'ORD', 'DFW', 'ATL', 'SFO', 'MIA', 'SEA'];
+                const flights = [];
+                const today = new Date();
+                
+                for (let i = 0; i < 80; i++) {
+                    const origin = bases[Math.floor(Math.random() * bases.length)];
+                    let destination = bases[Math.floor(Math.random() * bases.length)];
+                    while (destination === origin) {
+                        destination = bases[Math.floor(Math.random() * bases.length)];
+                    }
+                    
+                    const departureTime = new Date(today);
+                    departureTime.setHours(6 + Math.floor(Math.random() * 16), Math.floor(Math.random() * 60));
+                    
+                    const duration = 120 + Math.floor(Math.random() * 240);
+                    const arrivalTime = new Date(departureTime.getTime() + duration * 60000);
+                    
+                    flights.push({
+                        id: `FL${1000 + i}`,
+                        origin,
+                        destination,
+                        departureTime,
+                        arrivalTime,
+                        duration,
+                        covered: false,
+                        reliability: 0.80 + Math.random() * 0.18,
+                        aircraft: ['B737', 'A320', 'B777', 'A350'][Math.floor(Math.random() * 4)]
+                    });
+                }
+                
+                return flights.sort((a, b) => a.departureTime - b.departureTime);
+            };
+
+            const runOptimization = async () => {
+                setOptimizationStatus('running');
+                setProgress(0);
+
+                // Simulate optimization progress
+                const progressInterval = setInterval(() => {
+                    setProgress(prev => {
+                        if (prev >= 95) {
+                            clearInterval(progressInterval);
+                            return 95;
+                        }
+                        return prev + 5;
+                    });
+                }, 200);
+
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                
+                const generatedPairings = generatePairings(flights);
+                setPairings(generatedPairings);
+                
+                const fatigueResults = await analyzeFatigue(generatedPairings);
+                setFatigueData(fatigueResults);
+                
+                const reliabilityResults = calculateReliability(generatedPairings);
+                setReliabilityScores(reliabilityResults);
+                
+                setProgress(100);
+                clearInterval(progressInterval);
+                
+                setTimeout(() => {
+                    setOptimizationStatus('completed');
+                    setProgress(0);
+                }, 500);
+            };
+
+            const generatePairings = (flightList) => {
+                const pairings = [];
+                const bases = ['JFK', 'LAX', 'ORD', 'DFW', 'ATL', 'SFO', 'MIA', 'SEA'];
+                const used = new Set();
+                
+                for (let i = 0; i < 15; i++) {
+                    const base = bases[i % bases.length];
+                    const pairingFlights = [];
+                    let currentLocation = base;
+                    let totalDutyTime = 0;
+                    let totalFlightTime = 0;
+                    const dayCount = 1 + Math.floor(Math.random() * 3);
+                    
+                    const maxFlights = 3 + Math.floor(Math.random() * 3);
+                    
+                    for (let j = 0; j < maxFlights; j++) {
+                        const availableFlights = flightList.filter(f => 
+                            f.origin === currentLocation && 
+                            !used.has(f.id) &&
+                            totalDutyTime + f.duration + 45 < 480
+                        );
+                        
+                        if (availableFlights.length > 0) {
+                            const selectedFlight = availableFlights[Math.floor(Math.random() * availableFlights.length)];
+                            pairingFlights.push(selectedFlight.id);
+                            used.add(selectedFlight.id);
+                            currentLocation = selectedFlight.destination;
+                            totalFlightTime += selectedFlight.duration;
+                            totalDutyTime += selectedFlight.duration + 45;
+                        } else {
+                            break;
+                        }
+                    }
+                    
+                    if (pairingFlights.length > 0) {
+                        const cost = calculatePairingCost(pairingFlights.length, totalDutyTime, dayCount);
+                        const legal = checkLegality(totalDutyTime, totalFlightTime, dayCount);
+                        
+                        pairings.push({
+                            id: `PAR${1000 + i}`,
+                            base,
+                            flights: pairingFlights,
+                            totalDutyTime,
+                            totalFlightTime,
+                            dayCount,
+                            cost,
+                            legal,
+                            reliabilityScore: 0,
+                            qualityScore: 70 + Math.random() * 25
+                        });
+                    }
+                }
+                
+                return pairings;
+            };
+
+            const calculatePairingCost = (numFlights, dutyTime, days) => {
+                const baseCost = 500;
+                const flightCost = numFlights * 150;
+                const dutyCost = (dutyTime / 60) * 50;
+                const dayCost = days * 200;
+                const hotelCost = days > 1 ? (days - 1) * 120 : 0;
+                return baseCost + flightCost + dutyCost + dayCost + hotelCost;
+            };
+
+            const checkLegality = (dutyTime, flightTime, days) => {
+                const violations = [];
+                
+                if (dutyTime > 480) violations.push('Exceeds max duty time');
+                if (flightTime > 600) violations.push('Exceeds max flight time');
+                if (days > 4) violations.push('Exceeds max trip length');
+                
+                return {
+                    passed: violations.length === 0,
+                    violations
+                };
+            };
+
+            const analyzeFatigue = async (pairings) => {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                return pairings.map(pairing => {
+                    const baseAlertness = 85 - (pairing.dayCount * 3) - (pairing.totalDutyTime / 60);
+                    const alertnessScore = Math.max(65, Math.min(95, baseAlertness + Math.random() * 10));
+                    const chronicFatigueScore = 60 + Math.random() * 30;
+                    
+                    return {
+                        pairingId: pairing.id,
+                        alertnessScore,
+                        chronicFatigueScore,
+                        redThresholdViolations: alertnessScore < 75 ? Math.floor(Math.random() * 3) : 0,
+                        recommendation: alertnessScore >= 80 ? 'Approved' : alertnessScore >= 70 ? 'Review Required' : 'Redesign Needed'
+                    };
+                });
+            };
+
+            const calculateReliability = (pairings) => {
+                return pairings.map(pairing => {
+                    const baseReliability = 0.88;
+                    const numFlights = pairing.flights.length;
+                    const reliabilityScore = baseReliability * Math.pow(0.96, numFlights - 1);
+                    
+                    return {
+                        pairingId: pairing.id,
+                        reliabilityScore,
+                        propagatedDelayRisk: (1 - reliabilityScore) * 100,
+                        connectionReliability: pairing.flights.map(() => 0.88 + Math.random() * 0.10)
+                    };
+                });
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-lg border-b-4 border-indigo-600">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                            <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+                                <div className="flex items-center space-x-4">
+                                    <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl shadow-lg">
+                                        <Icons.Users />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                                            NetLine Crew Pairing
+                                        </h1>
+                                        <p className="text-sm text-gray-600">Lufthansa Systems Cloud Solution</p>
+                                    </div>
+                                </div>
+                                <div className="flex space-x-3">
+                                    <button className="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-indigo-400 transition flex items-center space-x-2">
+                                        <Icons.Upload />
+                                        <span className="text-sm font-medium">Import</span>
+                                    </button>
+                                    <button className="px-4 py-2 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 hover:border-indigo-400 transition flex items-center space-x-2">
+                                        <Icons.Download />
+                                        <span className="text-sm font-medium">Export</span>
+                                    </button>
+                                    <button 
+                                        onClick={runOptimization}
+                                        disabled={optimizationStatus === 'running'}
+                                        className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                                    >
+                                        <Icons.Play />
+                                        <span className="font-medium">
+                                            {optimizationStatus === 'running' ? 'Optimizing...' : 'Run Optimization'}
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Progress Bar */}
+                    {optimizationStatus === 'running' && (
+                        <div className="bg-indigo-600">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <div className="h-2 bg-indigo-400">
+                                    <div 
+                                        className="h-full bg-white progress-bar"
+                                        style={{width: `${progress}%`}}
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Navigation Tabs */}
+                    <div className="bg-white border-b shadow-sm">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <nav className="flex space-x-8 overflow-x-auto">
+                                {['dashboard', 'optimization', 'fatigue', 'reliability', 'assignments', 'settings'].map(tab => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className={`py-4 px-2 border-b-2 font-medium text-sm capitalize whitespace-nowrap transition ${
+                                            activeTab === tab
+                                                ? 'border-indigo-600 text-indigo-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {activeTab === 'dashboard' && <Dashboard flights={flights} pairings={pairings} optimizationStatus={optimizationStatus} />}
+                        {activeTab === 'optimization' && <OptimizationModule flights={flights} pairings={pairings} />}
+                        {activeTab === 'fatigue' && <FatigueModule pairings={pairings} fatigueData={fatigueData} />}
+                        {activeTab === 'reliability' && <ReliabilityModule pairings={pairings} reliabilityScores={reliabilityScores} />}
+                        {activeTab === 'assignments' && <AssignmentModule pairings={pairings} />}
+                        {activeTab === 'settings' && <SettingsModule />}
+                    </main>
+
+                    {/* Footer */}
+                    <footer className="bg-white border-t mt-12">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                            <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
+                                <p className="text-sm text-gray-600">© 2024 Lufthansa Systems - NetLine Crew Pairing</p>
+                                <p className="text-sm text-gray-500">Cloud-Native SaaS Solution | Version 2.0</p>
+                            </div>
+                        </div>
+                    </footer>
+                </div>
+            );
+        }
+
+        // Dashboard Component
+        function Dashboard({ flights, pairings, optimizationStatus }) {
+            const stats = {
+                totalFlights: flights.length,
+                coveredFlights: pairings.reduce((sum, p) => sum + p.flights.length, 0),
+                totalPairings: pairings.length,
+                totalCost: pairings.reduce((sum, p) => sum + p.cost, 0),
+                avgQuality: pairings.length > 0 
+                    ? (pairings.reduce((sum, p) => sum + p.qualityScore, 0) / pairings.length).toFixed(1)
+                    : 0,
+                legalPairings: pairings.filter(p => p.legal.passed).length
+            };
+
+            return (
+                <div className="space-y-6 fade-in">
+                    {/* Status Banners */}
+                    {optimizationStatus === 'running' && (
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg shadow">
+                            <div className="flex items-center">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+                                <div>
+                                    <p className="text-blue-800 font-semibold">Column Generation in Progress</p>
+                                    <p className="text-blue-600 text-sm">Solving constrained shortest path problem on duty tree...</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {optimizationStatus === 'completed' && (
+                        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg shadow">
+                            <div className="flex items-center">
+                                <Icons.CheckCircle />
+                                <div className="ml-3">
+                                    <p className="text-green-800 font-semibold">Optimization Complete</p>
+                                    <p className="text-green-600 text-sm">{pairings.length} high-quality pairings generated with {stats.legalPairings} legal solutions</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Key Metrics Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <MetricCard
+                            icon={<Icons.Calendar />}
+                            label="Total Flights"
+                            value={stats.totalFlights}
+                            subValue={`${stats.coveredFlights} covered`}
+                            bgColor="from-blue-500 to-blue-600"
+                            iconBg="bg-blue-100"
+                        />
+                        <MetricCard
+                            icon={<Icons.Users />}
+                            label="Pairings Generated"
+                            value={stats.totalPairings}
+                            subValue={`${stats.legalPairings} legal`}
+                            bgColor="from-green-500 to-green-600"
+                            iconBg="bg-green-100"
+                        />
+                        <MetricCard
+                            icon={<Icons.TrendingDown />}
+                            label="Total Cost"
+                            value={`$${(stats.totalCost / 1000).toFixed(1)}K`}
+                            subValue={`${stats.totalPairings > 0 ? `$${Math.round(stats.totalCost / stats.totalPairings)}` : '$0'} avg`}
+                            bgColor="from-purple-500 to-purple-600"
+                            iconBg="bg-purple-100"
+                        />
+                        <MetricCard
+                            icon={<Icons.CheckCircle />}
+                            label="Quality Score"
+                            value={`${stats.avgQuality}%`}
+                            subValue="High quality"
+                            bgColor="from-indigo-500 to-indigo-600"
+                            iconBg="bg-indigo-100"
+                        />
+                    </div>
+
+                    {/* Charts and Tables Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Pairings by Base */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Pairings by Base</h3>
+                            <div className="space-y-3">
+                                {['JFK', 'LAX', 'ORD', 'DFW', 'ATL'].map(base => {
+                                    const count = pairings.filter(p => p.base === base).length;
+                                    const percentage = pairings.length > 0 ? (count / pairings.length * 100) : 0;
+                                    return (
+                                        <div key={base}>
+                                            <div className="flex justify-between mb-1">
+                                                <span className="text-sm font-medium text-gray-700">{base}</span>
+                                                <span className="text-sm text-gray-600">{count} pairings</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 rounded-full h-2">
+                                                <div 
+                                                    className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full progress-bar"
+                                                    style={{width: `${percentage}%`}}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Cost Distribution */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Cost Analysis</h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-700 font-medium">Total Operating Cost</span>
+                                    <span className="text-xl font-bold text-indigo-600">${stats.totalCost.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-700 font-medium">Average per Pairing</span>
+                                    <span className="text-xl font-bold text-purple-600">
+                                        ${stats.totalPairings > 0 ? Math.round(stats.totalCost / stats.totalPairings).toLocaleString() : 0}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg border-2 border-green-200">
+                                    <span className="text-green-700 font-medium">Estimated Savings</span>
+                                    <span className="text-xl font-bold text-green-600">-18%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Recent Pairings Table */}
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Generated Pairings</h2>
+                        {pairings.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Icons.Plane />
+                                <p className="text-gray-500 mt-2">Click "Run Optimization" to generate crew pairings</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Pairing ID</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Base</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Flights</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Days</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duty Time</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cost</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quality</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {pairings.map(pairing => (
+                                            <tr key={pairing.id} className="hover:bg-indigo-50 transition">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{pairing.id}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-700 font-semibold">{pairing.base}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">{pairing.flights.length}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">{pairing.dayCount}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">
+                                                    {Math.floor(pairing.totalDutyTime / 60)}h {pairing.totalDutyTime % 60}m
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">${pairing.cost.toLocaleString()}</td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <div className="flex items-center">
+                                                        <div className="w-16 bg-gray-200 rounded-full h-2 mr-2">
+                                                            <div 
+                                                                className={`h-2 rounded-full ${pairing.qualityScore >= 80 ? 'bg-green-500' : 'bg-yellow-500'}`}
+                                                                style={{width: `${pairing.qualityScore}%`}}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-xs text-gray-600">{Math.round(pairing.qualityScore)}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    {pairing.legal.passed ? (
+                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Legal</span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">Violation</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Metric Card Component
+        function MetricCard({ icon, label, value, subValue, bgColor, iconBg }) {
+            return (
+                <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <p className="text-sm text-gray-600 mb-1">{label}</p>
+                            <p className="text-3xl font-bold text-gray-900">{value}</p>
+                            <p className="text-xs text-gray-500 mt-1">{subValue}</p>
+                        </div>
+                        <div className={`bg-gradient-to-br ${bgColor} p-4 rounded-xl shadow-lg text-white`}>
+                            {icon}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Optimization Module
+        function OptimizationModule({ flights, pairings }) {
+            const [settings, setSettings] = useState({
+                maxTripLength: 4,
+                maxDutyTime: 8,
+                minConnectionTime: 45,
+                minRestPeriod: 540,
+                maxAircraftChanges: 1,
+                allowDeadheading: true
+            });
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                            <Icons.Settings />
+                            <span className="ml-2">Column Generation Parameters</span>
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Max Trip Length (days)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={settings.maxTripLength}
+                                    onChange={(e) => setSettings({...settings, maxTripLength: e.target.value})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">FAA regulation compliant</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Max Duty Time (hours)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={settings.maxDutyTime}
+                                    onChange={(e) => setSettings({...settings, maxDutyTime: e.target.value})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Per duty period</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Min Connection Time (min)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={settings.minConnectionTime}
+                                    onChange={(e) => setSettings({...settings, minConnectionTime: e.target.value})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Between flights</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Min Rest Period (min)
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={settings.minRestPeriod}
+                                    onChange={(e) => setSettings({...settings, minRestPeriod: e.target.value})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Intervening rest</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Max Aircraft Changes
+                                </label>
+                                <input 
+                                    type="number" 
+                                    value={settings.maxAircraftChanges}
+                                    onChange={(e) => setSettings({...settings, maxAircraftChanges: e.target.value})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Per duty period</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Allow Deadheading
+                                </label>
+                                <select 
+                                    value={settings.allowDeadheading}
+                                    onChange={(e) => setSettings({...settings, allowDeadheading: e.target.value === 'true'})}
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                                >
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                </select>
+                                <p className="text-xs text-gray-500 mt-1">Positioning flights</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Optimization Algorithm</h3>
+                            <div className="space-y-4">
+                                <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                                    <h4 className="font-semibold text-indigo-900 mb-2">Set Partitioning Problem</h4>
+                                    <p className="text-sm text-indigo-700">
+                                        Formulating crew pairing as a mathematical optimization where rows represent flights 
+                                        and columns represent millions of feasible pairings.
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                                    <h4 className="font-semibold text-purple-900 mb-2">Column Generation</h4>
+                                    <p className="text-sm text-purple-700">
+                                        Iteratively adding new pairings by solving constrained shortest path problems 
+                                        on a directed acyclic duty tree graph.
+                                    </p>
+                                </div>
+                                <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                                    <h4 className="font-semibold text-green-900 mb-2">Sprint Method</h4>
+                                    <p className="text-sm text-green-700">
+                                        Accelerated LP solver focusing on subsets of columns for rapid solution generation 
+                                        with the Volume algorithm for approximate dual solutions.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Optimization Results</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-700 font-medium">Pairings Generated</span>
+                                    <span className="font-bold text-gray-900 text-xl">{pairings.length}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                                    <span className="text-gray-700 font-medium">Flight Coverage</span>
+                                    <span className="font-bold text-gray-900 text-xl">
+                                        {pairings.reduce((sum, p) => sum + p.flights.length, 0)} / {flights.length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                                    <span className="text-green-700 font-medium">Legal Pairings</span>
+                                    <span className="font-bold text-green-700 text-xl">
+                                        {pairings.filter(p => p.legal.passed).length} / {pairings.length}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
+                                    <span className="text-indigo-700 font-medium">Optimization Time</span>
+                                    <span className="font-bold text-indigo-700 text-xl">4.2s</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Fatigue Module
+        function FatigueModule({ pairings, fatigueData }) {
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-gradient-to-r from-orange-50 to-red-50 border-l-4 border-orange-500 p-6 rounded-lg shadow">
+                        <div className="flex items-start">
+                            <Icons.AlertTriangle />
+                            <div className="ml-3">
+                                <h3 className="text-lg font-bold text-orange-900">CAS-5 Circadian Alertness Simulator</h3>
+                                <p className="text-orange-700 mt-1">
+                                    Real-time fatigue analysis using validated biomathematical models to ensure crew alertness 
+                                    during critical flight phases (takeoff and landing).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Fatigue Risk Analysis</h2>
+                        {fatigueData.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Icons.Clock />
+                                <p className="text-gray-500 mt-2">Run optimization to analyze fatigue levels</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pairing ID</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Alertness Score</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Chronic Fatigue</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Red Violations</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Recommendation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {fatigueData.map(data => (
+                                            <tr key={data.pairingId} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{data.pairingId}</td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <div className="flex items-center">
+                                                        <div className="w-32 bg-gray-200 rounded-full h-3 mr-2">
+                                                            <div 
+                                                                className={`h-3 rounded-full progress-bar ${
+                                                                    data.alertnessScore >= 85 ? 'bg-green-500' : 
+                                                                    data.alertnessScore >= 75 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                }`}
+                                                                style={{width: `${data.alertnessScore}%`}}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-gray-700 font-semibold">{data.alertnessScore.toFixed(1)}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700 font-medium">
+                                                    {data.chronicFatigueScore.toFixed(1)}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                                        data.redThresholdViolations === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                                    }`}>
+                                                        {data.redThresholdViolations}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    {data.recommendation === 'Approved' ? (
+                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                                            ✓ Approved
+                                                        </span>
+                                                    ) : data.recommendation === 'Review Required' ? (
+                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                                                            ⚠ Review
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                                                            ✗ Redesign
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-3">
+                                    <Icons.CheckCircle />
+                                </div>
+                                <h3 className="text-3xl font-bold text-gray-900">
+                                    {fatigueData.filter(f => f.recommendation === 'Approved').length}
+                                </h3>
+                                <p className="text-gray-600 mt-1">Approved Pairings</p>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-3">
+                                    <Icons.AlertTriangle />
+                                </div>
+                                <h3 className="text-3xl font-bold text-gray-900">
+                                    {fatigueData.filter(f => f.recommendation === 'Review Required').length}
+                                </h3>
+                                <p className="text-gray-600 mt-1">Need Review</p>
+                            </div>
+                        </div>
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="text-center">
+                                <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-3">
+                                    <Icons.AlertTriangle />
+                                </div>
+                                <h3 className="text-3xl font-bold text-gray-900">
+                                    {fatigueData.reduce((sum, f) => sum + f.redThresholdViolations, 0)}
+                                </h3>
+                                <p className="text-gray-600 mt-1">Total Violations</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Reliability Module
+        function ReliabilityModule({ pairings, reliabilityScores }) {
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-6 rounded-lg shadow">
+                        <div className="flex items-start">
+                            <Icons.AlertTriangle />
+                            <div className="ml-3">
+                                <h3 className="text-lg font-bold text-blue-900">SurvCG - Survival Analysis</h3>
+                                <p className="text-blue-700 mt-1">
+                                    Data-driven reliability prediction using historical flight data to forecast connection success 
+                                    and minimize propagated delays by up to 61% under irregular operations.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Connection Reliability Analysis</h2>
+                        {reliabilityScores.length === 0 ? (
+                            <div className="text-center py-12">
+                                <Icons.TrendingDown />
+                                <p className="text-gray-500 mt-2">Run optimization to analyze reliability metrics</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Pairing ID</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Reliability Score</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Delay Risk</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Connections</th>
+                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="bg-white divide-y divide-gray-200">
+                                        {reliabilityScores.map(score => (
+                                            <tr key={score.pairingId} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{score.pairingId}</td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <div className="flex items-center">
+                                                        <div className="w-32 bg-gray-200 rounded-full h-3 mr-2">
+                                                            <div 
+                                                                className={`h-3 rounded-full progress-bar ${
+                                                                    score.reliabilityScore >= 0.85 ? 'bg-green-500' : 
+                                                                    score.reliabilityScore >= 0.75 ? 'bg-yellow-500' : 'bg-red-500'
+                                                                }`}
+                                                                style={{width: `${score.reliabilityScore * 100}%`}}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-gray-700 font-semibold">
+                                                            {(score.reliabilityScore * 100).toFixed(1)}%
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <span className={`font-semibold ${
+                                                        score.propagatedDelayRisk < 15 ? 'text-green-600' : 
+                                                        score.propagatedDelayRisk < 25 ? 'text-yellow-600' : 'text-red-600'
+                                                    }`}>
+                                                        {score.propagatedDelayRisk.toFixed(1)}%
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-700">
+                                                    {score.connectionReliability.length}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    {score.reliabilityScore >= 0.85 ? (
+                                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                                                            Reliable
+                                                        </span>
+                                                    ) : score.reliabilityScore >= 0.75 ? (
+                                                        <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-semibold">
+                                                            Moderate
+                                                        </span>
+                                                    ) : (
+                                                        <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                                                            At Risk
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Reliability Distribution</h3>
+                            <div className="space-y-3">
+                                <div>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="text-sm font-medium text-green-700">High Reliability (≥85%)</span>
+                                        <span className="text-sm text-gray-600">
+                                            {reliabilityScores.filter(s => s.reliabilityScore >= 0.85).length} pairings
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                        <div 
+                                            className="bg-green-500 h-3 rounded-full progress-bar"
+                                            style={{width: `${reliabilityScores.length > 0 ? (reliabilityScores.filter(s => s.reliabilityScore >= 0.85).length / reliabilityScores.length * 100) : 0}%`}}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="text-sm font-medium text-yellow-700">Moderate (75-85%)</span>
+                                        <span className="text-sm text-gray-600">
+                                            {reliabilityScores.filter(s => s.reliabilityScore >= 0.75 && s.reliabilityScore < 0.85).length} pairings
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                        <div 
+                                            className="bg-yellow-500 h-3 rounded-full progress-bar"
+                                            style={{width: `${reliabilityScores.length > 0 ? (reliabilityScores.filter(s => s.reliabilityScore >= 0.75 && s.reliabilityScore < 0.85).length / reliabilityScores.length * 100) : 0}%`}}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="flex justify-between mb-1">
+                                        <span className="text-sm font-medium text-red-700">At Risk (<75%)</span>
+                                        <span className="text-sm text-gray-600">
+                                            {reliabilityScores.filter(s => s.reliabilityScore < 0.75).length} pairings
+                                        </span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                        <div 
+                                            className="bg-red-500 h-3 rounded-full progress-bar"
+                                            style={{width: `${reliabilityScores.length > 0 ? (reliabilityScores.filter(s => s.reliabilityScore < 0.75).length / reliabilityScores.length * 100) : 0}%`}}
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Performance Metrics</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                                    <span className="text-green-700 font-medium">Avg Reliability</span>
+                                    <span className="text-2xl font-bold text-green-700">
+                                        {reliabilityScores.length > 0 
+                                            ? `${(reliabilityScores.reduce((sum, s) => sum + s.reliabilityScore, 0) / reliabilityScores.length * 100).toFixed(1)}%`
+                                            : '0%'
+                                        }
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                    <span className="text-blue-700 font-medium">Delay Reduction</span>
+                                    <span className="text-2xl font-bold text-blue-700">61%</span>
+                                </div>
+                                <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
+                                    <span className="text-purple-700 font-medium">Total Connections</span>
+                                    <span className="text-2xl font-bold text-purple-700">
+                                        {reliabilityScores.reduce((sum, s) => sum + s.connectionReliability.length, 0)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Assignment Module
+        function AssignmentModule({ pairings }) {
+            const [selectedCrew, setSelectedCrew] = useState(null);
+            
+            const crewMembers = [
+                { id: 1, name: 'Capt. Smith', seniority: 1, preferenceScore: 92, preferences: 'Morning flights, West Coast', assigned: pairings[0]?.id },
+                { id: 2, name: 'Capt. Johnson', seniority: 2, preferenceScore: 88, preferences: '3-day trips, Hub operations', assigned: pairings[1]?.id },
+                { id: 3, name: 'Capt. Davis', seniority: 3, preferenceScore: 85, preferences: 'Weekend off, International', assigned: pairings[2]?.id },
+                { id: 4, name: 'Capt. Wilson', seniority: 4, preferenceScore: 82, preferences: 'Short haul, JFK base', assigned: pairings[3]?.id },
+                { id: 5, name: 'Capt. Brown', seniority: 5, preferenceScore: 79, preferences: 'Evening flights, Flexible', assigned: pairings[4]?.id },
+            ];
+
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 p-6 rounded-lg shadow">
+                        <h3 className="text-lg font-bold text-purple-900 mb-2">Preferential Bidding System (PBS)</h3>
+                        <p className="text-purple-700">
+                            Lexicographic optimization assigns pairings based on seniority, maximizing each crew member's 
+                            preferences without decreasing scores of more senior pilots.
+                        </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-4">Crew Assignments</h2>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {crewMembers.map(crew => (
+                                <div 
+                                    key={crew.id} 
+                                    className="border-2 border-gray-200 rounded-lg p-5 hover:border-indigo-400 hover:shadow-lg transition cursor-pointer"
+                                    onClick={() => setSelectedCrew(crew)}
+                                >
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <h3 className="text-lg font-bold text-gray-900">{crew.name}</h3>
+                                            <p className="text-sm text-gray-500">Seniority #{crew.seniority}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-bold text-indigo-600">{crew.preferenceScore}</div>
+                                            <p className="text-xs text-gray-500">Preference Score</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex items-start">
+                                            <span className="text-xs font-semibold text-gray-600 mr-2">Preferences:</span>
+                                            <span className="text-xs text-gray-700">{crew.preferences}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between pt-2 border-t">
+                                            <span className="text-xs font-semibold text-gray-600">Assigned:</span>
+                                            {crew.assigned ? (
+                                                <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-semibold">
+                                                    {crew.assigned}
+                                                </span>
+                                            ) : (
+                                                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                                                    Unassigned
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h3 className="text-lg font-bold text-gray-900 mb-4">Assignment Statistics</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200 text-center">
+                                <div className="text-3xl font-bold text-indigo-700">{crewMembers.filter(c => c.assigned).length}</div>
+                                <p className="text-sm text-indigo-600 mt-1">Crew Assigned</p>
+                            </div>
+                            <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200 text-center">
+                                <div className="text-3xl font-bold text-green-700">
+                                    {crewMembers.length > 0 
+                                        ? Math.round(crewMembers.reduce((sum, c) => sum + c.preferenceScore, 0) / crewMembers.length)
+                                        : 0
+                                    }
+                                </div>
+                                <p className="text-sm text-green-600 mt-1">Avg Satisfaction</p>
+                            </div>
+                            <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200 text-center">
+                                <div className="text-3xl font-bold text-purple-700">100%</div>
+                                <p className="text-sm text-purple-600 mt-1">Seniority Compliance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Settings Module
+        function SettingsModule() {
+            return (
+                <div className="space-y-6 fade-in">
+                    <div className="bg-white rounded-xl shadow-lg p-6">
+                        <h2 className="text-xl font-bold text-gray-900 mb-6">System Configuration</h2>
+                        
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Regulatory Compliance</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">FAA Regulations</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Active</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">Union Labor Agreements</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Active</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">Airline-Specific Policies</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Integration Services</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">CAS-5 Fatigue Server (REST API)</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Connected</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">SurvCG Reliability Engine</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Connected</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">PBS Bidding System</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Connected</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Cloud Infrastructure</h3>
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">SaaS Deployment</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">24/7 Active</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">SSL Security</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Enabled</span>
+                                    </div>
+                                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span className="text-gray-700">Multi-Scheduler Support</span>
+                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">Enabled</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // Render the application
+        ReactDOM.render(<CrewPairingApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
