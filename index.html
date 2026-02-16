@@ -1,491 +1,747 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NetLine Crew Pairing System - Lufthansa Systems</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .animate-spin {
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aircraft Work Order System</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* Higher contrast palette */
+      --bg1:#f7f9fc;
+      --bg2:#eef3f9;
+
+      --text:#0f172a;
+      --muted:#475569;
+      --card:#ffffff;
+      --border:#d7e0ea;
+
+      --primary:#0a4d8c;
+      --primary2:#063a6a;
+      --accent:#ff6b35;
+
+      --success:#0ea371;
+      --warning:#b45309;
+      --danger:#b42318;
+
+      --shadow: 0 10px 28px rgba(15, 23, 42, .10);
+      --shadow2: 0 4px 12px rgba(15, 23, 42, .10);
+
+      --radius: 14px;
+      --radius2: 10px;
+
+      --focus: 0 0 0 4px rgba(255, 107, 53, .25);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font-family: "Rajdhani", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+    }
+
+    /* Header */
+    .header{
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary2) 100%);
+      color: #fff;
+      padding: 1.2rem 1.25rem;
+      box-shadow: var(--shadow2);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .header h1{
+      margin: 0;
+      font-size: clamp(1.25rem, 2vw, 1.7rem);
+      letter-spacing: .2px;
+      display:flex;
+      align-items:center;
+      gap:.5rem;
+    }
+
+    .container{
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 1.25rem;
+    }
+
+    /* Toolbar */
+    .toolbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .toolbar .hint{
+      color: var(--muted);
+      font-size: .95rem;
+      line-height: 1.2;
+    }
+
+    /* Buttons */
+    .btn{
+      appearance:none;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: .7rem 1.05rem;
+      cursor:pointer;
+      font-weight: 700;
+      letter-spacing: .2px;
+      transition: transform .05s ease, box-shadow .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+      user-select:none;
+      font-size: 1rem;
+      line-height: 1;
+      display:inline-flex;
+      align-items:center;
+      gap:.5rem;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn:disabled{ opacity:.55; cursor:not-allowed; }
+
+    .btn-primary{
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(255,107,53,.25);
+    }
+    .btn-primary:hover{ filter: brightness(.98); }
+
+    .btn-success{
+      background: var(--success);
+      color:#fff;
+      box-shadow: 0 8px 18px rgba(14,163,113,.18);
+    }
+
+    .btn-ghost{
+      background: #fff;
+      border-color: var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover{ background: #f8fafc; }
+
+    .btn:focus-visible{
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    /* Alerts */
+    #alertContainer{ margin-bottom: 1rem; }
+    .alert{
+      padding: .9rem 1rem;
+      border-radius: 12px;
+      border: 1px solid;
+      margin-bottom: .75rem;
+      box-shadow: 0 6px 14px rgba(15,23,42,.06);
+      font-size: 1rem;
+      line-height: 1.25;
+    }
+    .alert-success{ background:#e9f9f2; border-color:#b6efd5; color:#0b5f41; }
+    .alert-error{ background:#fdecec; border-color:#facdcd; color:#7a1d1d; }
+
+    /* Table wrapper for responsiveness */
+    .table-wrap{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .table-scroll{
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 1150px; /* allows horizontal scroll on small screens */
+      background: white;
+    }
+
+    thead th{
+      position: sticky;
+      top: 64px; /* header height approx; sticky within scroll */
+      z-index: 10;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary2) 100%);
+      color: #fff;
+      padding: .85rem .85rem;
+      text-align: left;
+      font-size: .95rem;
+      letter-spacing: .2px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+      white-space: nowrap;
+    }
+
+    tbody td{
+      padding: .85rem .85rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      font-size: 1rem;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    tbody tr:nth-child(even){ background: #f8fbff; }
+    tbody tr:hover{ background: #eef6ff; }
+
+    .loading{
+      text-align:center;
+      padding: 2rem;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    /* Status pill */
+    .status-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:.45rem;
+      padding: .25rem .55rem;
+      border-radius: 999px;
+      font-weight: 800;
+      font-size: .85rem;
+      letter-spacing: .2px;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+    .status-pill::before{
+      content:"";
+      width: .55rem;
+      height: .55rem;
+      border-radius: 999px;
+      background: currentColor;
+      opacity: .9;
+    }
+    .status-pending{
+      color: #92400e;
+      background: #fff7ed;
+      border-color: #fed7aa;
+    }
+    .status-completed{
+      color: #065f46;
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+    }
+
+    /* Due / Action formatting */
+    .mono{
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: .92rem;
+      color: #0b1220;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    .due-badge{
+      display:inline-block;
+      padding: .18rem .45rem;
+      border-radius: 6px;
+      font-size: .72rem;
+      font-weight: 900;
+      margin-right: .4rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: #fff;
+    }
+    .badge-afh{ background: #2563eb; }
+    .badge-afl{ background: #7c3aed; }
+
+    .remaining-critical{ color: var(--danger); font-weight: 900; }
+    .remaining-warning{ color: var(--warning); font-weight: 900; }
+
+    /* Small text in table cells */
+    .small{ font-size: .92rem; color: var(--muted); }
+    .nowrap{ white-space: nowrap; }
+
+    /* Modal */
+    .modal{
+      display:none;
+      position:fixed;
+      inset:0;
+      background: rgba(2, 6, 23, .65);
+      z-index: 1000;
+      padding: 1rem;
+    }
+    .modal.active{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .modal-content{
+      background: #fff;
+      border-radius: 16px;
+      width: min(760px, 100%);
+      max-height: 92vh;
+      overflow:auto;
+      padding: 1.25rem;
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.3);
+    }
+    .modal-header{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 1rem;
+      margin-bottom: .75rem;
+    }
+    .modal-header h2{
+      margin: 0;
+      font-size: 1.35rem;
+    }
+
+    label{
+      display:block;
+      margin-top: .85rem;
+      font-weight: 800;
+      color: #0b1220;
+    }
+    input, select, textarea{
+      width:100%;
+      padding: .8rem .85rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-top: .4rem;
+      font-size: 1rem;
+      background: #fff;
+    }
+    input:focus, textarea:focus, select:focus{
+      outline:none;
+      box-shadow: var(--focus);
+      border-color: rgba(255,107,53,.55);
+    }
+
+    .panel{
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .9rem;
+      margin-top: .75rem;
+      color: #0b1220;
+    }
+
+    .modal-actions{
+      display:flex;
+      gap: .75rem;
+      justify-content:flex-end;
+      flex-wrap: wrap;
+      margin-top: 1.1rem;
+    }
+
+    a.btn-link{
+      text-decoration:none;
+    }
+
+    @media (max-width: 640px){
+      .toolbar .hint{ font-size: .92rem; }
+      .btn{ width: 100%; justify-content:center; }
+      .modal-actions .btn{ width: 100%; }
+      thead th{ top: 62px; }
+    }
+  </style>
 </head>
+
 <body>
-    <div id="root"></div>
+  <div class="header">
+    <h1>✈ Aircraft Work Order Tracking</h1>
+  </div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+  <div class="container">
+    <div id="alertContainer"></div>
 
-        // Main Application
-        function App() {
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [flights, setFlights] = useState([]);
-            const [pairings, setPairings] = useState([]);
-            const [status, setStatus] = useState('idle');
-            const [progress, setProgress] = useState(0);
+    <div class="toolbar">
+      <button class="btn btn-primary" onclick="loadFromSheet()" id="refreshBtn">Refresh from Sheet</button>
+      <div class="hint">
+        Tip: On smaller screens, scroll horizontally to view all columns.
+      </div>
+    </div>
 
-            useEffect(() => {
-                generateFlights();
-            }, []);
+    <div class="table-wrap">
+      <div class="table-scroll" role="region" aria-label="Work order table">
+        <table id="workOrderTable">
+          <thead>
+            <tr>
+              <th style="width:110px;">Status</th>
+              <th style="width:110px;">Aircraft</th>
+              <th style="width:160px;">W/O Number</th>
+              <th style="min-width:360px;">Description</th>
+              <th style="min-width:220px;">Due Date / AFH / AFL</th>
+              <th style="min-width:220px;">Remarks</th>
+              <th style="min-width:240px;">Action Plan</th>
+              <th style="width:160px;">Completed By</th>
+              <th style="width:140px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9" class="loading">Loading work orders...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-            const generateFlights = () => {
-                const bases = ['JFK', 'LAX', 'ORD', 'DFW', 'ATL'];
-                const flightList = [];
-                
-                for (let i = 0; i < 60; i++) {
-                    const origin = bases[Math.floor(Math.random() * bases.length)];
-                    let dest = bases[Math.floor(Math.random() * bases.length)];
-                    while (dest === origin) dest = bases[Math.floor(Math.random() * bases.length)];
-                    
-                    flightList.push({
-                        id: `FL${1000 + i}`,
-                        origin,
-                        destination: dest,
-                        duration: 120 + Math.floor(Math.random() * 240)
-                    });
-                }
-                setFlights(flightList);
-            };
+  <!-- Modal -->
+  <div id="completeModal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+      <div class="modal-header">
+        <h2 id="completeTitle">Complete Work Order</h2>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()" aria-label="Close modal">Close</button>
+      </div>
 
-            const runOptimization = () => {
-                setStatus('running');
-                setProgress(0);
+      <div id="woDetails" class="panel"></div>
 
-                const interval = setInterval(() => {
-                    setProgress(p => {
-                        if (p >= 100) {
-                            clearInterval(interval);
-                            return 100;
-                        }
-                        return p + 10;
-                    });
-                }, 300);
+      <form id="completeForm" onsubmit="completeWorkOrder(event)">
+        <input type="hidden" id="completeIndex" />
 
-                setTimeout(() => {
-                    const newPairings = [];
-                    const bases = ['JFK', 'LAX', 'ORD', 'DFW', 'ATL'];
-                    
-                    for (let i = 0; i < 12; i++) {
-                        const base = bases[i % bases.length];
-                        const numFlights = 2 + Math.floor(Math.random() * 4);
-                        const flightIds = [];
-                        
-                        for (let j = 0; j < numFlights; j++) {
-                            const randomFlight = flights[Math.floor(Math.random() * flights.length)];
-                            if (randomFlight) flightIds.push(randomFlight.id);
-                        }
-                        
-                        const dutyTime = numFlights * 180 + (numFlights - 1) * 45;
-                        const cost = 500 + numFlights * 150 + (dutyTime / 60) * 50;
-                        
-                        newPairings.push({
-                            id: `PAR${1000 + i}`,
-                            base,
-                            flights: flightIds,
-                            dutyTime,
-                            cost,
-                            legal: dutyTime <= 480,
-                            quality: 70 + Math.random() * 25,
-                            alertness: 75 + Math.random() * 20,
-                            reliability: 0.82 + Math.random() * 0.15
-                        });
-                    }
-                    
-                    setPairings(newPairings);
-                    clearInterval(interval);
-                    setStatus('completed');
-                    setProgress(0);
-                }, 3000);
-            };
+        <label for="technicianName">Your Name *</label>
+        <input type="text" id="technicianName" required placeholder="Enter your full name" autocomplete="name" />
 
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
-                    {/* Header */}
-                    <header className="bg-white shadow-lg border-b-4 border-indigo-600">
-                        <div className="max-w-7xl mx-auto px-6 py-4">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                    <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-3 rounded-xl">
-                                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h1 className="text-2xl font-bold text-gray-900">NetLine Crew Pairing</h1>
-                                        <p className="text-sm text-gray-600">Lufthansa Systems Cloud Solution</p>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={runOptimization}
-                                    disabled={status === 'running'}
-                                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 font-semibold disabled:opacity-50"
-                                >
-                                    {status === 'running' ? 'Optimizing...' : 'Run Optimization'}
-                                </button>
-                            </div>
-                        </div>
-                    </header>
+        <label for="logbookFile">Logbook PDF *</label>
+        <input type="file" id="logbookFile" accept=".pdf" required />
+        <div class="small" style="margin-top:.35rem;">Max file size: 50MB</div>
 
-                    {/* Progress Bar */}
-                    {status === 'running' && (
-                        <div className="bg-indigo-600 h-2">
-                            <div className="bg-white h-2 transition-all" style={{width: `${progress}%`}}></div>
-                        </div>
-                    )}
+        <label for="completionNotes">Notes (Optional)</label>
+        <textarea id="completionNotes" rows="3" placeholder="Add any completion notes..."></textarea>
 
-                    {/* Tabs */}
-                    <div className="bg-white border-b">
-                        <div className="max-w-7xl mx-auto px-6">
-                            <nav className="flex space-x-8">
-                                {['Dashboard', 'Optimization', 'Fatigue', 'Reliability', 'Assignments'].map(tab => (
-                                    <button
-                                        key={tab}
-                                        onClick={() => setActiveTab(tab.toLowerCase())}
-                                        className={`py-4 px-2 border-b-2 font-medium ${
-                                            activeTab === tab.toLowerCase()
-                                                ? 'border-indigo-600 text-indigo-600'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700'
-                                        }`}
-                                    >
-                                        {tab}
-                                    </button>
-                                ))}
-                            </nav>
-                        </div>
-                    </div>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-success" id="submitBtn">Mark Complete</button>
+          <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-                    {/* Content */}
-                    <main className="max-w-7xl mx-auto px-6 py-8">
-                        {activeTab === 'dashboard' && <Dashboard flights={flights} pairings={pairings} status={status} />}
-                        {activeTab === 'optimization' && <Optimization pairings={pairings} />}
-                        {activeTab === 'fatigue' && <Fatigue pairings={pairings} />}
-                        {activeTab === 'reliability' && <Reliability pairings={pairings} />}
-                        {activeTab === 'assignments' && <Assignments pairings={pairings} />}
-                    </main>
-                </div>
-            );
+  <script>
+    // Re-paste your URLs carefully (PDF copy/paste sometimes injects control characters).
+    const SHEET_URL = 'PASTE_YOUR_PUBLISHED_CSV_URL_HERE';
+    const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+
+    let workOrders = [];
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    async function loadFromSheet() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Loading...';
+
+      try {
+        const response = await fetch(SHEET_URL, { cache: 'no-store' });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        const csv = await response.text();
+        workOrders = parseCSV(csv);
+        renderTable();
+        showAlert('Data loaded successfully! Found ' + workOrders.length + ' work orders.', 'success');
+      } catch (error) {
+        console.error('Error loading sheet:', error);
+        showAlert('Failed to load data: ' + error.message, 'error');
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh from Sheet';
+      }
+    }
+
+    function parseCSV(csv) {
+      const rows = [];
+      let currentRow = [];
+      let currentField = '';
+      let insideQuotes = false;
+
+      for (let i = 0; i < csv.length; i++) {
+        const char = csv[i];
+        const nextChar = csv[i + 1];
+
+        if (char === '"') {
+          if (insideQuotes && nextChar === '"') {
+            currentField += '"';
+            i++;
+          } else {
+            insideQuotes = !insideQuotes;
+          }
+        } else if (char === ',' && !insideQuotes) {
+          currentRow.push(currentField);
+          currentField = '';
+        } else if (char === '\n' && !insideQuotes) {
+          currentRow.push(currentField);
+          if (currentRow.length > 0 && currentRow[0]) rows.push(currentRow);
+          currentRow = [];
+          currentField = '';
+        } else {
+          currentField += char;
+        }
+      }
+
+      if (currentField || currentRow.length > 0) {
+        currentRow.push(currentField);
+        if (currentRow.length > 0 && currentRow[0]) rows.push(currentRow);
+      }
+
+      const orders = [];
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 4) continue;
+
+        orders.push({
+          aircraft: (row[0] || '').trim(),
+          woNumber: (row[1] || '').trim(),
+          description: (row[2] || '').trim(),
+          dueDate: (row[3] || '').trim(),
+          remarks: (row[4] || '').trim(),
+          actionPlan: (row[5] || '').trim(),
+          status: (row[6] || 'Pending').trim(),
+          completedBy: (row[7] || '').trim(),
+          completedDate: (row[8] || '').trim(),
+          logbookUrl: (row[9] || '').trim(),
+          completionNotes: (row[10] || '').trim()
+        });
+      }
+      return orders;
+    }
+
+    function formatDueDate(dueDate) {
+      if (!dueDate) return '<span class="small">-</span>';
+
+      const raw = escapeHtml(dueDate);
+      let html = '<div class="mono">';
+
+      const afhMatch = dueDate.match(/(\d+):(\d+)\s*(?:AFH)?/i);
+      if (afhMatch) {
+        html += `<div><span class="due-badge badge-afh">AFH</span>${escapeHtml(afhMatch[1])}:${escapeHtml(afhMatch[2])} hrs</div>`;
+      }
+
+      const aflMatch = dueDate.match(/(\d+)\s*\(?\s*(AFL|AFC)\s*\)?/i);
+      if (aflMatch) {
+        html += `<div><span class="due-badge badge-afl">AFL</span>${escapeHtml(aflMatch[1])} cycles</div>`;
+      }
+
+      const dateMatch = dueDate.match(/(\d{4}-\d{2}-\d{2})|(\d{1,2}-[A-Za-z]{3}-\d{2,4})/);
+      if (dateMatch && !afhMatch && !aflMatch) {
+        html += `<div>${escapeHtml(dateMatch[0])}</div>`;
+      }
+
+      if (!afhMatch && !aflMatch && !dateMatch) html += raw;
+
+      html += '</div>';
+      return html;
+    }
+
+    function formatActionPlan(actionPlan) {
+      if (!actionPlan || actionPlan.trim().toUpperCase() === 'NIL') return '<span class="small">-</span>';
+
+      const raw = escapeHtml(actionPlan);
+      let html = '<div class="mono">';
+
+      const afhRemMatch = actionPlan.match(/(\d+)\s+AFH\s+REMAINING/i);
+      if (afhRemMatch) {
+        const hours = parseInt(afhRemMatch[1], 10);
+        const className = hours <= 10 ? 'remaining-critical' : hours <= 30 ? 'remaining-warning' : '';
+        html += `<div class="${className}">${hours} AFH rem.</div>`;
+      }
+
+      const aflRemMatch = actionPlan.match(/(\d+)\s+AF[CL]\s+REMAINING/i);
+      if (aflRemMatch) {
+        const cycles = parseInt(aflRemMatch[1], 10);
+        const className = cycles <= 5 ? 'remaining-critical' : cycles <= 15 ? 'remaining-warning' : '';
+        html += `<div class="${className}">${cycles} AFL rem.</div>`;
+      }
+
+      const asOfMatch = actionPlan.match(/AS\s+OF\s+(\d{1,2}-[A-Za-z]{3}-\d{2,4})/i);
+      if (asOfMatch) {
+        html += `<div class="small" style="font-style: italic;">as of ${escapeHtml(asOfMatch[1])}</div>`;
+      }
+
+      if (!afhRemMatch && !aflRemMatch) html += raw;
+
+      html += '</div>';
+      return html;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+
+      if (workOrders.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="loading">No work orders found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = workOrders.map((wo, i) => {
+        const statusLower = (wo.status || 'Pending').toLowerCase();
+        const statusClass = statusLower === 'completed' ? 'status-completed' : 'status-pending';
+
+        const completedBlock = `
+          <div class="small">
+            <div>${escapeHtml(wo.completedBy || '-')}</div>
+            ${wo.completedDate ? `<div class="nowrap">${escapeHtml(wo.completedDate)}</div>` : ''}
+          </div>
+        `;
+
+        const actionBtn = (wo.status !== 'Completed')
+          ? `<button class="btn btn-success" onclick="openModal(${i})" style="padding:.55rem .75rem; font-size:.95rem;">Complete</button>`
+          : (wo.logbookUrl
+              ? `<a href="${escapeHtml(wo.logbookUrl)}" target="_blank" rel="noopener" class="btn btn-primary btn-link" style="padding:.55rem .75rem; font-size:.95rem;">PDF</a>`
+              : `<span class="small">Done</span>`);
+
+        return `
+          <tr>
+            <td><span class="status-pill ${statusClass}">${escapeHtml(wo.status)}</span></td>
+            <td><strong>${escapeHtml(wo.aircraft)}</strong></td>
+            <td class="small">${escapeHtml(wo.woNumber)}</td>
+            <td>${escapeHtml(wo.description)}</td>
+            <td>${formatDueDate(wo.dueDate)}</td>
+            <td>${wo.remarks ? escapeHtml(wo.remarks) : '<span class="small">-</span>'}</td>
+            <td>${formatActionPlan(wo.actionPlan)}</td>
+            <td>${completedBlock}</td>
+            <td>${actionBtn}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openModal(i) {
+      const wo = workOrders[i];
+      document.getElementById('completeIndex').value = i;
+
+      document.getElementById('woDetails').innerHTML = `
+        <div><strong>Aircraft:</strong> ${escapeHtml(wo.aircraft)}</div>
+        <div><strong>W/O Number:</strong> ${escapeHtml(wo.woNumber)}</div>
+        <div><strong>Description:</strong> ${escapeHtml(wo.description)}</div>
+        <div><strong>Due:</strong> ${escapeHtml(wo.dueDate || '-')}</div>
+        ${wo.actionPlan && wo.actionPlan.trim().toUpperCase() !== 'NIL'
+          ? `<div style="margin-top:.35rem;"><strong>Action Plan:</strong> ${escapeHtml(wo.actionPlan)}</div>`
+          : ''
+        }
+      `;
+
+      const modal = document.getElementById('completeModal');
+      modal.classList.add('active');
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('technicianName').focus();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('completeModal');
+      modal.classList.remove('active');
+      modal.setAttribute('aria-hidden', 'true');
+      document.getElementById('completeForm').reset();
+    }
+
+    // Close on backdrop click
+    document.getElementById('completeModal').addEventListener('click', (e) => {
+      if (e.target.id === 'completeModal') closeModal();
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const modal = document.getElementById('completeModal');
+        if (modal.classList.contains('active')) closeModal();
+      }
+    });
+
+    async function completeWorkOrder(e) {
+      e.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Uploading...';
+
+      const i = document.getElementById('completeIndex').value;
+      const wo = workOrders[i];
+      const name = document.getElementById('technicianName').value.trim();
+      const file = document.getElementById('logbookFile').files[0];
+      const notes = document.getElementById('completionNotes').value.trim();
+
+      if (!file) {
+        showAlert('Please choose a PDF file.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Mark Complete';
+        return;
+      }
+
+      if (file.size > 50 * 1024 * 1024) {
+        showAlert('File too large! Maximum size is 50MB.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Mark Complete';
+        return;
+      }
+
+      try {
+        const base64 = await fileToBase64(file);
+
+        const data = {
+          aircraft: wo.aircraft,
+          woNumber: wo.woNumber,
+          status: 'Completed',
+          completedBy: name,
+          completedDate: new Date().toISOString().split('T')[0],
+          logbookBase64: base64,
+          completionNotes: notes
+        };
+
+        submitBtn.textContent = 'Saving...';
+
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          closeModal();
+          showAlert(`Work Order ${wo.woNumber} completed successfully!`, 'success');
+          // quick reload
+          setTimeout(() => loadFromSheet(), 800);
+        } else {
+          throw new Error(result.error || 'Failed to complete work order');
         }
 
-        // Dashboard Component
-        function Dashboard({ flights, pairings, status }) {
-            const totalCost = pairings.reduce((sum, p) => sum + p.cost, 0);
-            const legalCount = pairings.filter(p => p.legal).length;
-            const avgQuality = pairings.length > 0 
-                ? pairings.reduce((sum, p) => sum + p.quality, 0) / pairings.length 
-                : 0;
+      } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Mark Complete';
+      }
+    }
 
-            return (
-                <div className="space-y-6 fade-in">
-                    {/* Status Banner */}
-                    {status === 'completed' && (
-                        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-                            <p className="text-green-800 font-semibold">✓ Optimization Complete - {pairings.length} pairings generated</p>
-                        </div>
-                    )}
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
 
-                    {/* Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div className="bg-white rounded-xl shadow-lg p-6">
-                            <div className="text-sm text-gray-600 mb-2">Total Flights</div>
-                            <div className="text-3xl font-bold text-gray-900">{flights.length}</div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-lg p-6">
-                            <div className="text-sm text-gray-600 mb-2">Pairings</div>
-                            <div className="text-3xl font-bold text-gray-900">{pairings.length}</div>
-                            <div className="text-xs text-green-600 mt-1">{legalCount} legal</div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-lg p-6">
-                            <div className="text-sm text-gray-600 mb-2">Total Cost</div>
-                            <div className="text-3xl font-bold text-gray-900">${Math.round(totalCost / 1000)}K</div>
-                        </div>
-                        <div className="bg-white rounded-xl shadow-lg p-6">
-                            <div className="text-sm text-gray-600 mb-2">Quality Score</div>
-                            <div className="text-3xl font-bold text-gray-900">{avgQuality.toFixed(1)}%</div>
-                        </div>
-                    </div>
+    function showAlert(message, type) {
+      const container = document.getElementById('alertContainer');
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type}`;
+      alert.textContent = message;
+      container.appendChild(alert);
 
-                    {/* Pairings Table */}
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold mb-4">Generated Pairings</h2>
-                        {pairings.length === 0 ? (
-                            <p className="text-gray-500 text-center py-12">Click "Run Optimization" to generate pairings</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">ID</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Base</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Flights</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Duty Time</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Cost</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Quality</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {pairings.map(p => (
-                                            <tr key={p.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3 text-sm font-medium">{p.id}</td>
-                                                <td className="px-4 py-3 text-sm">{p.base}</td>
-                                                <td className="px-4 py-3 text-sm">{p.flights.length}</td>
-                                                <td className="px-4 py-3 text-sm">{Math.floor(p.dutyTime / 60)}h {p.dutyTime % 60}m</td>
-                                                <td className="px-4 py-3 text-sm">${Math.round(p.cost)}</td>
-                                                <td className="px-4 py-3 text-sm">{p.quality.toFixed(0)}%</td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        p.legal ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                                    }`}>
-                                                        {p.legal ? 'Legal' : 'Violation'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
+      setTimeout(() => {
+        alert.style.opacity = '0';
+        alert.style.transition = 'opacity 0.35s';
+        setTimeout(() => alert.remove(), 400);
+      }, 4500);
+    }
 
-        // Optimization Component
-        function Optimization({ pairings }) {
-            return (
-                <div className="space-y-6 fade-in">
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold mb-6">Column Generation Settings</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Max Trip Length (days)</label>
-                                <input type="number" defaultValue="4" className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Max Duty Time (hours)</label>
-                                <input type="number" defaultValue="8" className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Min Connection Time (min)</label>
-                                <input type="number" defaultValue="45" className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">Min Rest Period (min)</label>
-                                <input type="number" defaultValue="540" className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h3 className="text-lg font-bold mb-4">Algorithm Details</h3>
-                        <div className="space-y-4">
-                            <div className="p-4 bg-indigo-50 rounded-lg border-2 border-indigo-200">
-                                <h4 className="font-semibold text-indigo-900 mb-2">Set Partitioning Problem</h4>
-                                <p className="text-sm text-indigo-700">Mathematical optimization where rows represent flights and columns represent feasible pairings</p>
-                            </div>
-                            <div className="p-4 bg-purple-50 rounded-lg border-2 border-purple-200">
-                                <h4 className="font-semibold text-purple-900 mb-2">Column Generation</h4>
-                                <p className="text-sm text-purple-700">Iteratively solving constrained shortest path problems on duty tree graphs</p>
-                            </div>
-                            <div className="p-4 bg-green-50 rounded-lg border-2 border-green-200">
-                                <h4 className="font-semibold text-green-900 mb-2">Results</h4>
-                                <p className="text-sm text-green-700">Generated {pairings.length} pairings with {pairings.filter(p => p.legal).length} legal solutions</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Fatigue Component
-        function Fatigue({ pairings }) {
-            return (
-                <div className="space-y-6 fade-in">
-                    <div className="bg-orange-50 border-l-4 border-orange-500 p-6 rounded">
-                        <h3 className="text-lg font-bold text-orange-900 mb-2">CAS-5 Circadian Alertness Simulator</h3>
-                        <p className="text-orange-700">Real-time fatigue analysis using biomathematical models for crew safety</p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold mb-4">Fatigue Analysis</h2>
-                        {pairings.length === 0 ? (
-                            <p className="text-gray-500 text-center py-12">Run optimization first</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Pairing ID</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Alertness Score</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Recommendation</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {pairings.map(p => (
-                                            <tr key={p.id}>
-                                                <td className="px-4 py-3 text-sm font-medium">{p.id}</td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <div className="flex items-center">
-                                                        <div className="w-32 bg-gray-200 rounded-full h-3 mr-2">
-                                                            <div 
-                                                                className={`h-3 rounded-full ${p.alertness >= 85 ? 'bg-green-500' : 'bg-yellow-500'}`}
-                                                                style={{width: `${p.alertness}%`}}
-                                                            ></div>
-                                                        </div>
-                                                        <span>{p.alertness.toFixed(1)}%</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        p.alertness >= 85 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
-                                                        {p.alertness >= 85 ? 'Approved' : 'Review'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        // Reliability Component
-        function Reliability({ pairings }) {
-            return (
-                <div className="space-y-6 fade-in">
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded">
-                        <h3 className="text-lg font-bold text-blue-900 mb-2">SurvCG - Survival Analysis</h3>
-                        <p className="text-blue-700">Data-driven reliability prediction to minimize propagated delays by up to 61%</p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold mb-4">Reliability Analysis</h2>
-                        {pairings.length === 0 ? (
-                            <p className="text-gray-500 text-center py-12">Run optimization first</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full">
-                                    <thead className="bg-gray-50">
-                                        <tr>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Pairing ID</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Reliability Score</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Delay Risk</th>
-                                            <th className="px-4 py-3 text-left text-xs font-semibold">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {pairings.map(p => (
-                                            <tr key={p.id}>
-                                                <td className="px-4 py-3 text-sm font-medium">{p.id}</td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <div className="flex items-center">
-                                                        <div className="w-32 bg-gray-200 rounded-full h-3 mr-2">
-                                                            <div 
-                                                                className={`h-3 rounded-full ${p.reliability >= 0.85 ? 'bg-green-500' : 'bg-yellow-500'}`}
-                                                                style={{width: `${p.reliability * 100}%`}}
-                                                            ></div>
-                                                        </div>
-                                                        <span>{(p.reliability * 100).toFixed(1)}%</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm">{((1 - p.reliability) * 100).toFixed(1)}%</td>
-                                                <td className="px-4 py-3 text-sm">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                                        p.reliability >= 0.85 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                                                    }`}>
-                                                        {p.reliability >= 0.85 ? 'Reliable' : 'Moderate'}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        }
-
-        // Assignments Component
-        function Assignments({ pairings }) {
-            const crew = [
-                { name: 'Capt. Smith', seniority: 1, score: 92, prefs: 'Morning flights, West Coast', assigned: pairings[0]?.id },
-                { name: 'Capt. Johnson', seniority: 2, score: 88, prefs: '3-day trips, Hub ops', assigned: pairings[1]?.id },
-                { name: 'Capt. Davis', seniority: 3, score: 85, prefs: 'Weekend off, International', assigned: pairings[2]?.id },
-                { name: 'Capt. Wilson', seniority: 4, score: 82, prefs: 'Short haul, JFK base', assigned: pairings[3]?.id }
-            ];
-
-            return (
-                <div className="space-y-6 fade-in">
-                    <div className="bg-purple-50 border-l-4 border-purple-500 p-6 rounded">
-                        <h3 className="text-lg font-bold text-purple-900 mb-2">Preferential Bidding System (PBS)</h3>
-                        <p className="text-purple-700">Lexicographic optimization by seniority for optimal crew satisfaction</p>
-                    </div>
-
-                    <div className="bg-white rounded-xl shadow-lg p-6">
-                        <h2 className="text-xl font-bold mb-4">Crew Assignments</h2>
-                        <div className="space-y-4">
-                            {crew.map(c => (
-                                <div key={c.name} className="border-2 border-gray-200 rounded-lg p-5 hover:border-indigo-400 transition">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <h3 className="text-lg font-bold">{c.name}</h3>
-                                            <p className="text-sm text-gray-500">Seniority #{c.seniority}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-bold text-indigo-600">{c.score}</div>
-                                            <p className="text-xs text-gray-500">Score</p>
-                                        </div>
-                                    </div>
-                                    <p className="text-xs text-gray-600 mb-2"><strong>Preferences:</strong> {c.prefs}</p>
-                                    <div className="flex justify-between items-center pt-2 border-t">
-                                        <span className="text-xs font-semibold">Assigned:</span>
-                                        {c.assigned ? (
-                                            <span className="px-3 py-1 bg-indigo-100 text-indigo-800 rounded-full text-xs font-semibold">
-                                                {c.assigned}
-                                            </span>
-                                        ) : (
-                                            <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                                                Unassigned
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        // Render
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    loadFromSheet();
+  </script>
 </body>
 </html>
